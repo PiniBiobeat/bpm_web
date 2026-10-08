@@ -1,5 +1,6 @@
 from infra.page_base import PageBase
 import re
+from playwright.sync_api import expect
 
 
 class ForgotPasswordPage(PageBase):
@@ -14,6 +15,8 @@ class ForgotPasswordPage(PageBase):
     CHANGE_PASSWORD_BUTTON = (
         "button:has-text('Reset Password'), button:has-text('Change Password'), button:has-text('Change password')"
     )
+    RESEND_BUTTON = "button:has-text('Resend')"
+    PASSWORD_EXPIRED_MESSAGE = "Your password has expired"
     EMAIL_ERROR = "text=/email is required|please enter a valid email address|invalid email/i"
 
     def verify_forgot_password_page_opened(self):
@@ -165,3 +168,38 @@ class ForgotPasswordPage(PageBase):
         text = (value or "").strip().lower()
         text = re.sub(r"[^a-z0-9\s]", "", text)
         return " ".join(text.split())
+
+    # ---- Assertions -------------------------------------------------------
+
+    def expect_forgot_password_page_opened(self):
+        expect(self.pw_page.locator(self.EMAIL_INPUT).first).to_be_visible(timeout=10000)
+        expect(self.pw_page.locator(self.BACK_TO_LOGIN).first).to_be_visible(timeout=10000)
+        expect(self.pw_page.locator(self.REQUEST_CODE).first).to_be_visible(timeout=10000)
+
+    def expect_verification_screen_opened(self):
+        expect(self.pw_page.locator(self.VERIFICATION_CODE_INPUT).first).to_be_visible(timeout=15000)
+        expect(self.pw_page.locator(self.NEW_PASSWORD_INPUT).first).to_be_visible(timeout=15000)
+        expect(self.pw_page.locator(self.CONFIRM_PASSWORD_INPUT).first).to_be_visible(timeout=15000)
+        expect(self.pw_page.locator(self.CHANGE_PASSWORD_BUTTON).first).to_be_visible(timeout=15000)
+
+    def expect_password_expired_message_visible(self):
+        expect(self.pw_page.get_by_text(self.PASSWORD_EXPIRED_MESSAGE).first).to_be_visible(timeout=15000)
+
+    def expect_resend_button_visible(self):
+        expect(self.pw_page.locator(self.RESEND_BUTTON).first).to_be_visible(timeout=10000)
+
+    def expect_back_to_login_visible(self):
+        expect(self.pw_page.locator(self.BACK_TO_LOGIN).first).to_be_visible(timeout=10000)
+
+    def expect_email_error_message(self, expected_message: str):
+        assert self.verify_email_error_message(expected_message), (
+            f"Expected email error '{expected_message}' to be displayed."
+        )
+
+    def expect_email_marked_invalid(self):
+        assert self.verify_email_marked_red(), "Expected the email field to be marked as invalid."
+
+    def expect_reset_password_error_message(self, expected_message: str):
+        assert self.verify_reset_password_error_message(expected_message), (
+            f"Expected reset-password error '{expected_message}' to be displayed."
+        )

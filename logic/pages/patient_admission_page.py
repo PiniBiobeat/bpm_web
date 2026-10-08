@@ -204,7 +204,7 @@ class PatientAdmissionPage(PageBase):
         self.pw_page.locator("input[type='radio'][value='male'], input[name*='gender']").first.check()
 
     def select_first_referring_physician(self):
-        self.pw_page.locator("div[role='combobox']").click()
+        self.pw_page.locator("input[role='combobox']").click()
         self.pw_page.get_by_role("option").first.click()
 
     def clear_patient_id(self):

@@ -1,6 +1,7 @@
 from infra.page_base import PageBase
 from logic.pages.patient_admission_page import PatientAdmissionPage
 import re
+from playwright.sync_api import expect
 from typing import List
 
 
@@ -86,6 +87,19 @@ class SessionManagementPage(PageBase):
             return True
         except Exception:
             return False
+
+    def expect_session_management_page_opened(self):
+        assert self.verify_session_management_page_opened(), "Session management page did not open."
+
+    def expect_url(self, expected_url: str):
+        expect(self.pw_page).to_have_url(expected_url, timeout=15000)
+
+    def expect_header_and_navigation_visible(self):
+        for selector in (self.SESSION_MANAGEMENT_HEADER, self.PATIENT_ADMISSION_NAV, self.PATIENT_LOOKUP_NAV):
+            expect(self.pw_page.locator(selector).first).to_be_visible(timeout=10000)
+
+    def expect_session_grid_opened(self):
+        assert self.verify_session_grid_opened(), "Session grid controls/headers are not visible."
 
     def verify_session_grid_opened(self):
         try:
@@ -693,6 +707,25 @@ class SessionManagementPage(PageBase):
 
     def open_settings_menu(self):
         self._click_any_visible([self.SETTINGS_BUTTON], timeout=10000)
+
+    def expect_settings_menu_opened(self):
+        assert self.verify_settings_menu_opened(), (
+            "Expected Email Support, Choose Department, and Log out options in the settings menu."
+        )
+
+    def expect_email_support_visible(self):
+        expect(self.pw_page.locator(self.SETTINGS_EMAIL_SUPPORT_OPTION).first).to_be_visible(timeout=10000)
+
+    def expect_choose_department_visible(self):
+        expect(self.pw_page.locator(self.SETTINGS_CHOOSE_DEPARTMENT_OPTION).first).to_be_visible(timeout=10000)
+
+    def expect_settings_client_name(self, expected_client_name: str):
+        expect(self.pw_page.locator(self.SETTINGS_CLIENT_NAME).first).to_have_text(
+            expected_client_name, timeout=10000
+        )
+
+    def expect_settings_user_email_visible(self, user_email: str):
+        expect(self.pw_page.get_by_text(user_email).first).to_be_visible(timeout=10000)
 
     def verify_settings_menu_opened(self):
         try:

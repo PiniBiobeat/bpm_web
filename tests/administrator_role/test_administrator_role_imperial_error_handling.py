@@ -9,11 +9,11 @@ from tests.test_base_online import TestBaseOnline
 
 
 SESSION_URL_FRAGMENT = "session-management"
-ADMIN_EMAIL = os.getenv("ADMIN_METRIC_EMAIL")
-ADMIN_PASSWORD = os.getenv("ADMIN_METRIC_PASSWORD")
+ADMIN_EMAIL = os.getenv("ADMIN_IMPERIAL_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_IMPERIAL_PASSWORD")
 USED_DEVICE_ID = os.getenv("USED_DEVICE_ID")
 USED_DEVICE_ID_ERROR = os.getenv("USED_DEVICE_ID_ERROR", "Device ID already exists")
-INACTIVE_DEVICE_ID = os.getenv("INACTIVE_DEVICE_ID", "11111111")
+INACTIVE_DEVICE_ID =  "11111111"
 INACTIVE_DEVICE_ID_ERROR = os.getenv(
     "INACTIVE_DEVICE_ID_ERROR", "Device is not activated or does not exist."
 )
@@ -23,7 +23,7 @@ class TestAdministratorRoleErrorHandlingImperial(TestBaseOnline):
 
     def _login_and_open_patient_admission(self):
         if not ADMIN_EMAIL or not ADMIN_PASSWORD:
-            pytest.skip("Set ADMIN_METRIC_EMAIL and ADMIN_METRIC_PASSWORD to run administrator tests.")
+            pytest.skip("Set ADMIN_IMPERIAL_EMAIL and ADMIN_IMPERIAL_PASSWORD to run administrator tests.")
 
         page: LogInOnline = self.browser_online.navigate(configuration["online_url"], LogInOnline)
         assert page.verify_login_page_opened(), "Login page did not load for administrator scenario."
@@ -55,7 +55,7 @@ class TestAdministratorRoleErrorHandlingImperial(TestBaseOnline):
         assert page.verify_error_message("Weight is required")
         assert page.verify_error_message("Feet is required")
         assert page.verify_error_message("Inches is required")
-        assert page.verify_error_message("Referring physician is required")
+        assert page.verify_error_message("Please enter physician name")
 
     @pytest.mark.usefixtures("before_after_test")
     def test_patient_admission_patient_id_max_length_validation(self):
@@ -172,8 +172,7 @@ class TestAdministratorRoleErrorHandlingImperial(TestBaseOnline):
 
         expected_errors = [
             INACTIVE_DEVICE_ID_ERROR,
-            "Device is not activated",
-            "does not exist",
+            "Device is not activated or does not exist."
         ]
         error_found = False
         for _ in range(8):

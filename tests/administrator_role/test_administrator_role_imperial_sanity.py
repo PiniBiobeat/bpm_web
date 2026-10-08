@@ -11,9 +11,9 @@ from tests.test_base_online import TestBaseOnline
 
 
 SESSION_URL_FRAGMENT = "session-management"
-ADMIN_EMAIL = os.getenv("ADMIN_METRIC_EMAIL")
-ADMIN_PASSWORD = os.getenv("ADMIN_METRIC_PASSWORD")
-SANITY_DEVICE_ID = "1111111"
+ADMIN_EMAIL = os.getenv("ADMIN_IMPERIAL_EMAIL")
+ADMIN_PASSWORD = os.getenv("ADMIN_IMPERIAL_PASSWORD")
+SANITY_DEVICE_ID = "130646"
 
 
 class TestAdministratorRoleImperialSanity(TestBaseOnline):

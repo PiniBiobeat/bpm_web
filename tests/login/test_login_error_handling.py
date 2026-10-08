@@ -1,73 +1,53 @@
 import pytest
 
-from infra.config.config_provider import configuration
 from logic.pages.login_page import LogInOnline
-from tests.test_base_online import TestBaseOnline
+
+VALID_EMAIL = "pini.mari@bio-beat.com"
+
+EMAIL_REQUIRED_ERROR = "email is required"
+PASSWORD_REQUIRED_ERROR = "Password is required"
+INCORRECT_CREDENTIALS_ERROR = "Incorrect email or password"
 
 
-class TestLoginErrorHandling(TestBaseOnline):
-    expected_url = "https://bpholter.stage.bio-beat.cloud/session-management"
+def test_login_with_invalid_credentials_shows_error(login_page: LogInOnline):
+    login_page.login("wrong.user@bio-beat.com", "Pm123456!")
 
-    def open_login_page(self) -> LogInOnline:
-        return self.browser_online.navigate(configuration["online_url"], LogInOnline)
+    login_page.expect_login_rejected()
 
-    @pytest.mark.usefixtures("before_after_test")
-    def test_login_with_invalid_credentials_shows_error(self):
-        page = self.open_login_page()
-        page.login("wrong.user@bio-beat.com", "Pm123456!")
-        page.pw_page.wait_for_timeout(2000)
 
-        assert page.verify_login_page_opened(), "Expected to remain on login form after failed authentication."
-        assert "/login" in page.pw_page.url, f"Expected to remain on login page, got '{page.pw_page.url}'"
-        assert page.pw_page.url != self.expected_url, "Invalid credentials must not navigate to the session page."
+def test_login_with_empty_email_and_password(login_page: LogInOnline):
+    login_page.login("", "")
 
-    @pytest.mark.usefixtures("before_after_test")
-    def test_login_with_empty_email_and_password(self):
-        page = self.open_login_page()
-        page.login("", "")
+    login_page.expect_error_message(EMAIL_REQUIRED_ERROR)
+    login_page.expect_email_marked_invalid()
 
-        assert page.verify_error_message("email is required")
-        assert page.verify_email_marked_red()
 
-    @pytest.mark.usefixtures("before_after_test")
-    def test_login_with_empty_password(self):
-        page = self.open_login_page()
-        page.login("pini.mari@bio-beat.com", "")
-        assert page.verify_error_message("Password is required")
-        assert page.verify_password_marked_red()
+def test_login_with_empty_password(login_page: LogInOnline):
+    login_page.login(VALID_EMAIL, "")
 
-    @pytest.mark.usefixtures("before_after_test")
-    def test_login_with_empty_email(self):
-        page = self.open_login_page()
-        page.login("", "123456")
+    login_page.expect_error_message(PASSWORD_REQUIRED_ERROR)
+    login_page.expect_password_marked_invalid()
 
-        assert page.verify_error_message("email is required")
-        assert page.verify_email_marked_red()
 
-    @pytest.mark.usefixtures("before_after_test")
-    def test_login_with_invalid_email_format(self):
-        page = self.open_login_page()
-        page.login("user@,user.com", "123456")
+def test_login_with_empty_email(login_page: LogInOnline):
+    login_page.login("", "123456")
 
-        assert page.verify_error_message("Incorrect email or password")
+    login_page.expect_error_message(EMAIL_REQUIRED_ERROR)
+    login_page.expect_email_marked_invalid()
 
-    @pytest.mark.usefixtures("before_after_test")
-    def test_login_with_wrong_email(self):
-        page = self.open_login_page()
-        page.login("wrong@bio-beat.com", "ValidPassword123")
 
-        assert page.verify_error_message("Incorrect email or password")
+@pytest.mark.parametrize(
+    ("email", "password"),
+    [
+        pytest.param("user@,user.com", "123456", id="invalid_email_format"),
+        pytest.param("wrong@bio-beat.com", "ValidPassword123", id="wrong_email"),
+        pytest.param("deleted.user@bio-beat.com", "ValidPassword123", id="deleted_user"),
+        pytest.param(VALID_EMAIL, "12", id="short_password"),
+    ],
+)
+def test_login_with_rejected_credentials_shows_incorrect_credentials_error(
+    login_page: LogInOnline, email: str, password: str
+):
+    login_page.login(email, password)
 
-    @pytest.mark.usefixtures("before_after_test")
-    def test_login_with_deleted_user(self):
-        page = self.open_login_page()
-        page.login("deleted.user@bio-beat.com", "ValidPassword123")
-
-        assert page.verify_error_message("Incorrect email or password")
-
-    @pytest.mark.usefixtures("before_after_test")
-    def test_login_with_short_password(self):
-        page = self.open_login_page()
-        page.login("pini.mari@bio-beat.com", "12")
-
-        assert page.verify_error_message("Incorrect email or password")
+    login_page.expect_error_message(INCORRECT_CREDENTIALS_ERROR)

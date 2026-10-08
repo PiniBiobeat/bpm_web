@@ -51,7 +51,7 @@ class TestAdministratorRoleMetricForm(TestBaseOnline):
         assert page.verify_error_message("Gender is required")
         assert page.verify_error_message("Weight is required")
         assert page.verify_error_message("Height is required")
-        assert page.verify_error_message("Referring physician is required")
+        assert page.verify_error_message("Please enter physician name")
 
     @pytest.mark.usefixtures("before_after_test")
     def test_patient_admission_patient_id_max_length_validation(self):
@@ -170,7 +170,7 @@ class TestAdministratorRoleMetricForm(TestBaseOnline):
 
         expected_errors = [
             INACTIVE_DEVICE_ID_ERROR,
-            "Device is not activated",
+            "Device is not activated or does not exist.",
             "does not exist",
         ]
         error_found = False

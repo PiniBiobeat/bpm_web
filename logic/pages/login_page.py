@@ -1,5 +1,6 @@
 from infra.page_base import PageBase
 import re
+from playwright.sync_api import expect
 from logic.pages.forgot_password_page import ForgotPasswordPage
 
 
@@ -9,9 +10,13 @@ class LogInOnline(PageBase):
     LOGIN_BUTTON = "button[type='submit']"
     EMAIL_INPUT = "input[type='email'], input[name='email'], input[placeholder='Email']"
     PASSWORD_INPUT = "input[type='password'], input[name='password'], input[placeholder='Password']"
-    
-    
-    
+    SUBMIT_BUTTON = "button[type='submit'], input[type='submit']"
+    FORGOT_PASSWORD_LABEL = "Forgot your password?"
+
+    LOGIN_URL_FRAGMENT = "/login"
+    SESSION_MANAGEMENT_URL_FRAGMENT = "session-management"
+    FAILED_LOGIN_SETTLE_MS = 2000
+
     def enter_username(self, username: str):
         locator = self.pw_page.locator(
             "input[type='email'], input[name='email'], input[placeholder='Email']"
@@ -143,3 +148,35 @@ class LogInOnline(PageBase):
             return "255, 0, 0" in border_color or "220, 38, 38" in border_color or "red" in border_color
         except Exception:
             return False
+
+    # ---- Assertions -------------------------------------------------------
+
+    def expect_login_page_opened(self):
+        expect(self.pw_page.locator(self.EMAIL_INPUT).first).to_be_visible(timeout=10000)
+        expect(self.pw_page.locator(self.PASSWORD_INPUT).first).to_be_visible(timeout=10000)
+        expect(
+            self.pw_page.get_by_role("button", name=self.FORGOT_PASSWORD_LABEL, exact=True)
+        ).to_be_visible(timeout=10000)
+        expect(self.pw_page.locator(self.SUBMIT_BUTTON).first).to_be_visible(timeout=10000)
+        expect(self.pw_page.locator(self.SUBMIT_BUTTON).first).to_contain_text(
+            re.compile(r"log\s?in", re.IGNORECASE)
+        )
+
+    def expect_login_rejected(self):
+        """After a failed authentication the user stays on the login form."""
+        # Auth failures render no stable element to wait on, so give the response time to arrive.
+        self.pw_page.wait_for_timeout(self.FAILED_LOGIN_SETTLE_MS)
+        self.expect_login_page_opened()
+        expect(self.pw_page).to_have_url(re.compile(re.escape(self.LOGIN_URL_FRAGMENT)))
+        expect(self.pw_page).not_to_have_url(re.compile(self.SESSION_MANAGEMENT_URL_FRAGMENT))
+
+    def expect_error_message(self, expected_message: str):
+        assert self.verify_error_message(expected_message), (
+            f"Expected login error '{expected_message}' to be displayed."
+        )
+
+    def expect_email_marked_invalid(self):
+        assert self.verify_email_marked_red(), "Expected the email field to be marked as invalid."
+
+    def expect_password_marked_invalid(self):
+        assert self.verify_password_marked_red(), "Expected the password field to be marked as invalid."
